@@ -31,10 +31,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Geode mod
-        uses: geode-sdk/build-geode-mod@main
+        uses: geode-sdk/build-geode-mod@963ac394ad1773b6ea5b0f96aade52a44c6a4770
         with:
           target: ${{ matrix.config.target }}
-          sdk: given
+          sdk: 5.10.1
+          cli: 3.9.0
           bindings: geode-sdk/bindings
           bindings-ref: 2769df212b1107c592f15e98d2e059d013481add
           combine: true
@@ -46,7 +47,7 @@ jobs:
 
     steps:
       - name: Combine platform builds
-        uses: geode-sdk/build-geode-mod/combine@main
+        uses: geode-sdk/build-geode-mod/combine@963ac394ad1773b6ea5b0f96aade52a44c6a4770
         id: combine
 
       - name: Upload STNSF
