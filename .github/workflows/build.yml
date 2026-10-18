@@ -13,6 +13,9 @@ jobs:
       fail-fast: false
       matrix:
         config:
+          - name: Windows64
+            os: windows-latest
+            target: Win64
           - name: Android32
             os: ubuntu-latest
             target: Android32
@@ -31,6 +34,9 @@ jobs:
         uses: geode-sdk/build-geode-mod@main
         with:
           target: ${{ matrix.config.target }}
+          sdk: given
+          bindings: geode-sdk/bindings
+          bindings-ref: 2769df212b1107c592f15e98d2e059d013481add
           combine: true
 
   package:
