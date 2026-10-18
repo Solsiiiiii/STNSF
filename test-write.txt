@@ -1,0 +1,1 @@
+STNSF write-access test
