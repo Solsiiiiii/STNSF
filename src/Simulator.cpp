@@ -4,7 +4,6 @@ using namespace geode::prelude;
 
 namespace stnsf::sim {
     static PlayerObject* g_simPlayer = nullptr;
-    static bool g_simulating = false;
     static bool g_simDied = false;
 
     bool isSimulationPlayer(PlayerObject* player) {
@@ -24,31 +23,29 @@ namespace stnsf::sim {
     }
 
     static PlayerObject* makeSimulationPlayer(GJBaseGameLayer* layer, PlayerObject* live) {
-        // 2.2081's binding exposes this five-argument constructor.
+        // Geometry Dash 2.2081 exposes this exact five-argument factory.
         auto* sim = PlayerObject::create(1, 1, layer, layer, true);
         if (!sim)
             return nullptr;
 
-        // copyAttributes is a 2.2081 PlayerObject method specifically intended
-        // to transfer the complete gameplay state between PlayerObjects.
+        // copyAttributes is part of the 2.2081 PlayerObject API and copies the
+        // gameplay state needed to continue physics from the live player.
         sim->copyAttributes(live);
         sim->setPosition(live->getPosition());
         sim->setRotation(live->getRotation());
         sim->setVisible(false);
-
-        // Keep the clone in the layer's node tree so cocos/Geometry Dash
-        // pointers used during physics are valid, while keeping it invisible.
         layer->addChild(sim, -100000);
         return sim;
     }
 
-    static bool advanceOneFrame(GJBaseGameLayer* layer, PlayerObject* sim, float dt) {
+    static bool advanceOnePhysicsFrame(GJBaseGameLayer* layer, PlayerObject* sim) {
         if (g_simDied)
             return false;
 
-        sim->resetCollisionLog();
-        sim->update(dt);
-        layer->checkCollisions(sim, dt, false);
+        constexpr float PHYSICS_DT = 1.f / 240.f;
+        sim->resetCollisionLog(false);
+        sim->update(PHYSICS_DT);
+        layer->checkCollisions(sim, PHYSICS_DT, false);
         return !g_simDied && !sim->m_playerDied;
     }
 
@@ -67,18 +64,16 @@ namespace stnsf::sim {
 
         destroySimulationPlayer();
         g_simDied = false;
-        g_simulating = true;
 
         auto* sim = makeSimulationPlayer(layer, livePlayer);
-        if (!sim) {
-            g_simulating = false;
+        if (!sim)
             return -1;
-        }
         g_simPlayer = sim;
 
-        // Candidate 0 is the actual input frame. Candidates >0 advance the
-        // clone first, then apply the input. The first surviving candidate is
-        // therefore the nearest survivable frame to the real click.
+        // Test candidates in ascending order. Candidate 0 is the exact input
+        // frame; candidate N advances the clone N physics frames before the
+        // input. The first surviving candidate is therefore the nearest safe
+        // frame, with no more than the configured 12-frame forward allowance.
         for (int candidate = 0; candidate <= maxFrames; ++candidate) {
             sim->copyAttributes(livePlayer);
             sim->setPosition(livePlayer->getPosition());
@@ -87,28 +82,28 @@ namespace stnsf::sim {
             g_simDied = false;
 
             bool alive = true;
-            for (int frame = 0; frame < candidate && alive; ++frame) {
-                alive = advanceOneFrame(layer, sim, 1.f / 240.f);
-            }
+            for (int frame = 0; frame < candidate && alive; ++frame)
+                alive = advanceOnePhysicsFrame(layer, sim);
 
             if (alive) {
+                const auto playerButton = static_cast<PlayerButton>(button);
                 if (push)
-                    sim->pushButton(button, player2);
+                    sim->pushButton(playerButton);
                 else
-                    sim->releaseButton(button, player2);
+                    sim->releaseButton(playerButton);
 
-                alive = advanceOneFrame(layer, sim, 1.f / 240.f);
+                alive = advanceOnePhysicsFrame(layer, sim);
             }
 
             if (alive) {
-                g_simulating = false;
-                destroySimulationPlayer();
+                g_simPlayer = nullptr;
+                sim->removeFromParentAndCleanup(true);
                 return candidate;
             }
         }
 
-        g_simulating = false;
-        destroySimulationPlayer();
+        g_simPlayer = nullptr;
+        sim->removeFromParentAndCleanup(true);
         return -1;
     }
 }
