@@ -1,0 +1,49 @@
+{
+  "geode": "5.10.1",
+  "gd": {
+    "win": "2.2081",
+    "android": "2.2081",
+    "mac": "2.2081",
+    "ios": "2.2081"
+  },
+  "version": "v0.1.0",
+  "id": "solsiiiiii.stnsf",
+  "name": "STNSF",
+  "developer": "Solsiiiiii",
+  "description": "Snap To Nearest Survivable Frame — analyzes a click and snaps it to the nearest survivable physics frame.",
+  "tags": ["gameplay", "utility"],
+  "settings": {
+    "enabled": {
+      "name": "Enabled",
+      "description": "Enable STNSF during gameplay.",
+      "type": "bool",
+      "default": true
+    },
+    "window": {
+      "name": "Forward Frame Window",
+      "description": "Maximum number of physics frames STNSF may move an input forward.",
+      "type": "int",
+      "default": 12,
+      "min": 0,
+      "max": 12
+    },
+    "p1": {
+      "name": "Player 1",
+      "description": "Apply STNSF to Player 1 inputs.",
+      "type": "bool",
+      "default": true
+    },
+    "p2": {
+      "name": "Player 2",
+      "description": "Apply STNSF to Player 2 inputs.",
+      "type": "bool",
+      "default": true
+    },
+    "practice": {
+      "name": "Practice Mode",
+      "description": "Allow STNSF while practicing.",
+      "type": "bool",
+      "default": true
+    }
+  }
+}
