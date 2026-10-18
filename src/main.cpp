@@ -30,13 +30,21 @@ namespace stnsf {
         return Mod::get()->getSettingValue<bool>(player2 ? "p2" : "p1");
     }
 
+    static bool practiceAllowed(PlayLayer* pl) {
+        if (!pl)
+            return false;
+        if (!pl->m_isPracticeMode)
+            return true;
+        return Mod::get()->getSettingValue<bool>("practice");
+    }
+
     static void clear() {
         pending.clear();
     }
 
     static void dispatch(GJBaseGameLayer* layer, PendingInput const& input) {
-        // Calling the base implementation bypasses our interception hook.
-        GJBaseGameLayer::handleButton(input.push, input.button, !input.player2);
+        // Explicit base qualification bypasses the STNSF interception hook.
+        layer->GJBaseGameLayer::handleButton(input.push, input.button, !input.player2);
     }
 
     static void tickPending(GJBaseGameLayer* layer) {
@@ -63,7 +71,8 @@ public:
         const bool player2 = !player1;
 
         if (!stnsf::enabled() || !pl || pl->m_playerDied ||
-            !stnsf::playerEnabled(player2) || stnsf::window() == 0) {
+            !stnsf::practiceAllowed(pl) || !stnsf::playerEnabled(player2) ||
+            stnsf::window() == 0) {
             return GJBaseGameLayer::handleButton(push, button, player1);
         }
 
@@ -87,7 +96,7 @@ public:
         }
 
         // The simulator found a safe future frame. Store the event and let the
-        // normal PlayLayer update loop dispatch it on that exact frame.
+        // normal PlayLayer update loop dispatch it on that exact physics frame.
         stnsf::pending.push_back({push, button, player2, offset});
     }
 };
